@@ -1,0 +1,997 @@
+---
+title: "Multimorbidity 2003-2017"
+date: "`r Sys.Date()`"
+output:
+  word_document:
+    reference_docx: /home/passi/MEGA/PhD/PhD_report/static/Report/Template1.docx
+    toc: no
+    toc_depth: 3
+    number_sections: no
+  rmarkdown::pdf_document:
+    keep_tex: no
+    latex_engine: xelatex
+    toc: yes
+  officedown::rdocx_document:
+    mapstyles:
+      Normal: First Paragraph
+  pdf_document:
+    toc: no
+    toc_depth: '3'
+    latex_engine: xelatex
+geometry:
+- top=1in
+- bottom=1in
+- right=1in
+- left=1.5in
+params:
+  year: '2020'
+  degree: Doctor of Philosophy
+  field: Epidemiology and Public Health
+  chair: '..., Ph.D.'
+  committee1: '..., Ph.D.'
+  committee2: '..., Ph.D.'
+  gradschool: '..., Ph.D.'
+bibliography: /home/passi/MEGA/PhD/PhD_report/static/zlib.bib
+csl: /home/passi/MEGA/PhD/PhD_report/static/bmc-public-health.csl
+---
+
+```{r , echo=FALSE, warning=FALSE, include=FALSE}
+update_code<-0
+```
+
+```{r , echo=FALSE, warning=FALSE, include=FALSE}
+knitr::opts_chunk$set(echo=FALSE, warning=FALSE, include=FALSE)
+
+# library(DT)
+library(tidyverse)
+library(labelled)
+library(RColorBrewer)
+library(huxtable)
+library(captioner)
+library(survey)
+library(srvyr)
+library(ggrepel)
+
+
+options(survey.lonely.psu="certainty")
+set.seed(42)
+options(scipen=999)
+
+fig_nums<-captioner(prefix = "Figure")
+tab_nums<-captioner(prefix = "Table")
+# rms::
+sec_nums<-captioner(prefix = "",  auto_space = FALSE)
+# tab_nums<-captioner(prefix = "Table ",  auto_space = FALSE)
+eq_nums<-captioner(prefix = "Equation ",  auto_space = FALSE)
+
+```
+
+```{r}
+
+raw <- pdftools::pdf_data('/home/passi/MEGA/PaulaMargozzini/MMC/Estrategia-de-cuidado-Integral-centrado-en-las-personas-en-contexto-de-multimorbilidad.pdf')
+# raw1 <- pdftools::pdf_text('/home/passi/MEGA/PaulaMargozzini/MMC/Estrategia-de-cuidado-Integral-centrado-en-las-personas-en-contexto-de-multimorbilidad.pdf')
+
+
+pdftools::pdf_subset('/home/passi/MEGA/PaulaMargozzini/MMC/Estrategia-de-cuidado-Integral-centrado-en-las-personas-en-contexto-de-multimorbilidad.pdf',
+                     pages = 64:67, output = "subset.pdf")
+
+# library(staplr)
+# install.packages("staplr")
+staplr::rotate_pages(rotatepages = c(1,2,3,4), page_rotation = 90,  "/home/passi/MEGA/PaulaMargozzini/MMC/subset.pdf", "/home/passi/MEGA/PaulaMargozzini/MMC/subset2.pdf")
+
+# staplr::rotate_pages("/home/passi/MEGA/PaulaMargozzini/MMC/subset.pdf")
+
+f2 <-"/home/passi/MEGA/PaulaMargozzini/MMC/subset2.pdf"
+tf2<-tabulizer::extract_tables(f2, pages = 1:4, method = "decide")
+library(tidyverse)
+
+# tf2<- lappy(as.data.frame, tf2)
+# tf2<- do.call(as.data.frame, tf2)
+
+tf21<-as.data.frame(tf2[1])
+tf22<-as.data.frame(tf2[2])
+tf23<-as.data.frame(tf2[3])
+tf24<-as.data.frame(tf2[4])
+
+t0<-bind_rows(tf21,tf22,tf23,tf24)
+names(t0)<-t0[1,]
+t0<-t0%>%
+  subset(Puntaje!="Puntaje")
+
+t0<-t0%>%
+  select("N°","Puntaje","Patología o Condición")
+write.csv(t0,"MINSAL_list_52.csv")
+# 
+# 
+# 
+# tf2<-as.data.frame(tf2)
+# 
+# # f2 <-lapply(f2, gsub(",","."))
+# pages <- lapply(seq_along(raw), function(p) {
+#   if (nrow(raw[[p]]) > 0) {
+#     raw[[p]]$page <- p
+#     raw[[p]]
+#   }
+# }) %>% 
+#   bind_rows() %>% 
+#   group_by(y, page) %>% 
+#   summarise(text = paste(text, collapse = " ")) %>% 
+#   arrange(page, y)
+# 
+# 
+# 
+# pages<-subset(pages,page>=11&page<=16)
+```
+
+```{r , include=FALSE}
+df0_total<- rio::import("/home/passi/MEGA/PhD/PhD_report/content/docs/chapter4/ENS2003_10_17_CASEN_CAMAS_MORTALIDAD.rds")
+
+# df0_total%>%
+#   group_by(Folio_AP) %>%
+#   summarise(n=n()) %>%
+#   arrange(-n)
+
+# table(df0_total$ENS)
+ENS2003_2010_2017_book<-read.csv("/home/passi/MEGA/PhD/PhD_report/content/docs2/fondecyt_manuel/ENS2003_2010_2017_book.csv")
+```
+
+*Events and exposures*
+
+The main event was all-cause death. The main exposures were multimorbidity index... The new government´s simplified multimorbidity risk stratification:
+
+-   G3. High Risk, 5 or more chronic conditions.
+
+-   G2. Moderate risk, 2 to 4 chronic conditions.
+
+-   G1. Mild risk, 1 chronic condition.
+
+-   G0. No Risk or no chronic conditions
+
+The full list of conditions and corresponding scores are included in the appendix. Some conditions (diabetes, dependence, ...) had double of weight in the score. Ref: Rediseño en el abordaje de personas con multimorbilidad crónica: desde la fragmentación al cuidado integral centrado en las personas
+
+The multimorbidity index included a list of x conditions: obesity, hypertension, diabetes, CKD (MDRD\<30), self-reported dyslipidemia, musculoskeletal disorder, history of CHD, EPOC-Asthma-Emphysema, depression, current smoker, cognitive impairment.
+
+Diabetes, CHD and cognitive impairment had double of weight
+
+```{r, include=FALSE}
+# def_table_52<-rio::import("https://docs.google.com/spreadsheets/d/1f3sa0n8xpui8Qum4IAZIHOoJNiROMg4j5g1x9OFFjqI/edit#gid=637050705")
+# write.csv(def_table_52,"def_table_52.csv")
+def_table_52 <-read.csv("/home/passi/MEGA/PaulaMargozzini/MMC/def_table_52.csv")
+
+names(def_table_52)<-gsub(" ","",names(def_table_52))
+```
+
+\newpage
+
+# **`r paste(tab_nums(name = "t0", caption =""),"Operational definitions" ,sep="")`**
+
+```{r, echo=FALSE, warning=FALSE, include=F}
+def_table<-def_table_52
+def_table$X<-NULL
+def_table$Score<-def_table$Puntaje
+# def_table<- def_table %>%
+#   select("Pathology.or.condition.", "Score","Included.in.ENS.score.",Operational.definition)
+# dput(names(def_table))
+```
+
+```{r, echo=FALSE, warning=FALSE, include=F}
+hux_f<-function(Data) {
+  h1<-hux(Data)
+  h1<-set_number_format(h1, NA)
+  width(h1) <- 1
+  h1<-set_bold(h1, 1, everywhere)
+  h1<-set_bottom_border(h1, 1, everywhere)
+  h1<-set_top_border(h1, 1, everywhere)
+  h1<-set_bottom_border(h1, dim(h1)[1], everywhere)
+  
+  h1<-h1%>%
+    set_font_size(9) %>%
+    set_outer_padding(0) %>%  
+    set_row_height(c(0.8))
+  
+  
+  h1<-h1%>%
+    set_align(1, everywhere, "center") %>% 
+    set_tb_padding(everywhere, everywhere, 0) %>% 
+    set_bold(1, everywhere)
+  h1<-set_number_format(h1, NA)
+  
+  
+  h1
+}
+```
+
+```{r, echo=FALSE, warning=FALSE, include=F}
+
+ta1<-def_table %>%
+  subset(Included.in.ENS.score.==1) %>%
+  mutate(list=paste0(Pathology.or.condition,Operational.definition))%>%
+  select(Pathology.or.condition,Operational.definition)
+
+
+```
+
+```{r, echo=FALSE, warning=FALSE, include=TRUE}
+def_table1<-def_table%>%
+  select("Pathology.or.condition", Score,
+         "Included.in.ENS.score.")
+# dput(names(def_table))
+hux_f(def_table1)
+```
+
+```{r, echo=FALSE, warning=FALSE, include=TRUE}
+def_table1 %>%
+  subset(Included.in.ENS.score.==1)%>%
+  summarise(sum(Score))
+
+```
+
+\newpage
+
+# **`r paste(tab_nums(name = "t0", caption =""),"Operational definitions" ,sep="")`**
+
+```{r, echo=FALSE, warning=FALSE, include=TRUE}
+rownames(ta1)<-NULL
+hux_f(ta1)
+```
+
+**Statistical analyses**
+
+```{r, include=FALSE}
+df01<-rio::import("/home/passi/MEGA/PaulaMargozzini/MMC/ENS_2003_Ministerio_de_Salud_Chile_Dpto_Epidemiología_VENT+DEF2018.sav")
+
+# names(df01)
+
+df02<-rio::import("/home/passi/MEGA/PaulaMargozzini/MMC/ENCUESTA NACIONAL DE SALUD-ENS 2009-2010, DEPTO.EPIDEMIOLOGIA, MINSAL__comuna +DEF2018.sav")
+
+names_df02<-as.data.frame(names(df02))
+
+df03<-rio::import("/home/passi/MEGA/PaulaMargozzini/MMC/Base de datos Encuesta Nacional de Salud 2016-2017(ENS).Formulario 1_2_EX.MINSAL_EPI. (2)_CIDI_SF_Comuna_metales pesados+DEF2018.sav")
+
+
+df04<-rio::import("/home/passi/Documents/ENS/Bases de datos/Mortalidad y egresos/ENS_2003__Egresos_Hospitalarios.xlsx")
+```
+
+**RESULTS**
+
+```{r , include=FALSE}
+# blogdown::new_site(theme = 'gcushen/hugo-academic')
+df0<-df0_total
+# table(df0$ENS)
+df0$daysbetween_o<-df0$daysbetween_
+# df0$daysbetween_[df0$daysbetween_>5625]<-5625
+df0$daysbetween_[df0$daysbetween_>3287.25]<-3287.25
+# 
+# table(df0$muerte_9a_)
+# table(df0$muerte_9a)
+# table(df0$muerte_)
+# table(df0$muerte)
+# 
+# 
+
+
+```
+
+```{r , include=FALSE}
+df0$Gender<-factor(df0$Sexo,
+                   levels=c("1","2"),
+                   labels=c("Male",
+                            "Female"))
+df0$Educational_level<-factor(df0$NEDU_,
+                              levels=c("1","2","3"),
+                              labels=c("Educ: Low",
+                                       "Educ: Mid",
+                                       "Educ: High"))
+df0$Area<-factor(df0$Zona,
+                 levels=c("1","2"),
+                 labels=c("Urban",
+                          "Rural"))
+df0$Age<-factor(df0$Edad_Codificada,
+                levels=c("1","2","3","4"),
+                labels=c("21-44",
+                         "21-44",
+                         "45-64",
+                         "65+"))
+
+df0$NEDU<-as.numeric(df0$NEDU_)
+df0$Fexp_F2p_Corr<-df0$Fexp_F2p_Corr_
+
+df0$fexp<-df0$Fexp_F2p_Corr
+df0$Age_<-df0$Age
+df0$Age<-df0$Edad_Codificada
+df0$Age<-factor(df0$Age,
+                levels=c(1,2,3,4),
+                labels=c(1,1,2,3))
+
+df0$employment<-factor(df0$employ_status_ocup,
+                       levels=c(
+                         5,6,7
+                       ),
+                       labels=c(
+                         "Higher","Intermediate","Manual"
+                       ))
+
+df0$Edad_Codificada<-factor(df0$Edad_Codificada,
+                            levels=c(1,2,3,4
+                            ),
+                            labels=c(
+                              "15-24","25-44","45-64","65+"
+                            ))
+
+df0$employment2<-factor(df0$employ_status_ocup,
+                        levels=c(3,2,4,
+                                 5,6,7,1
+                        ),
+                        labels=c("Inactive","Homemaker","Retired",
+                                 "Higher","Intermediate","Manual","Worker (missing)"
+                        ))
+
+df0$employment3<-factor(df0$employ_status_ocup,
+                        levels=c(3,2,4,
+                                 5,6,7,
+                                 1
+                        ),
+                        labels=c("Other","Other","Other",
+                                 "Higher","Intermediate","Manual","Other"
+                        ))
+
+df0$Age<-df0$Edad
+df0$Educational_level_op<-factor(df0$NEDU,
+                                 levels=c("3","2","1"),
+                                 labels=c("High",
+                                          "Mid",
+                                          "Low"))
+df0$Gender<-factor(df0$Sexo,
+                   levels=c("1","2"),
+                   labels=c("Male",
+                            "Female"))
+df0$income_q_op<-factor(df0$income_q,
+                        levels=c("4","3","2","1"),
+                        labels=c("Richest",
+                                 "q2",
+                                 "q3",
+                                 "Poorer"))
+
+df0$employment_op<-factor(df0$employ_status_ocup,
+                          levels=c(
+                            5,6,7
+                          ),
+                          labels=c(
+                            "Higher","Intermediate","Manual"
+                          ))
+
+df0$prevalence<-df0$HTA2003_10_17_ATC
+df0$undiagnosed<-ifelse(df0$CONOCIMIENTO_HTA2003_10_17_ATC==0,1,0)
+df0$untreated<-ifelse(df0$TRATAMIENTO_HTA2003_10_17_ATC==0,1,0)
+df0$uncontrolled<-ifelse(df0$CONTROL_HTA2003_10_17_ATC==0,1,0)
+df0$Age_paper<-cut(df0$Edad_,c(16,44,64,Inf))
+
+df0$outcome<-df0$prevalence
+
+df0$SBP<-df0$PAS2003_10_17_2m
+df0$DBP<-df0$PAD2003_10_17_2m
+
+
+# df0$muerte_9a<-df0$muerte_9a_
+# df0$muerte<-df0$muerte_9a
+df0$FechaDef<-as.Date(df0$FechaDef_)
+df0$FechaInicioF1_date<-as.Date(df0$FechaInicioF1_date_)
+
+
+df0$daysbetween_3287_25<-df0$daysbetween_3287_25_
+df0$yearsbetween3287_25<-df0$yearsbetween3287_25_
+df0$outcome<-df0$muerte_9a
+```
+
+```{r , include=FALSE}
+# ("Smoking1", 
+# table(df0$ENS,df0$TABACO_DEP_)
+# **** TABACO DEPENDENCIA ****.
+# COMPUTE TABACO_DEP =  (MISSING(ta2) = 0).
+# RECODE TABACO_DEP (0=SYSMIS).
+# DO IF (ta4 = 4 | MISSING(ta4) = 1).
+# RECODE TABACO_DEP (1=0).
+# VALUE LABEL TABACO_DEP 1 "SI" 0 "NO". 
+# Variable labels  TABACO_DEP 'Alta dependencia al tabaco (fuma antes de 60 minutos de despierto)'.
+# VALUE LABELS  TABACO_DEP  1 "Si" 0 "No".
+# table(df0$ENS,df0$Fumador_Actual)
+# table(df0$ENS,df0$fum_actual_)
+# df0$aux8_MMC<-df0$fum_actual_==1
+
+df0$mmcx1<-ifelse(df0$fum_actual_==1,1,0)
+table(df0$ENS,df0$mmcx1)
+
+```
+
+```{r , include=FALSE}
+# "Osteoarthritis of knee,
+# hip or other1", 
+# df0$aux4_MMC<-df0$SME2_==1
+df0$mmcx2<-ifelse(df0$SME2_==1,1,0)
+table(df0$ENS,df0$mmcx2)
+
+```
+
+```{r , include=FALSE}
+# "Asthma1",
+df0$asma[!is.na(df0$p130a1) | !is.na(df0$r22) | !is.na(df0$m9p18A)]<-0
+
+df0$asma[df0$p130a1==15]<-1
+df0$asma[df0$p130a2==15]<-1
+df0$asma[df0$p130a3==15]<-1
+df0$asma[df0$p130a4==15]<-1
+df0$asma[df0$p130a5==15]<-1
+df0$asma[df0$p130a6==15]<-1
+df0$asma[df0$p130a7==15]<-1
+df0$asma[df0$p130a8==15]<-1
+df0$asma[df0$p130a9==15]<-1
+df0$asma[df0$p130a10==15]<-1
+df0$asma[df0$p130a11==15]<-1
+df0$asma[df0$p130a12==15]<-1
+df0$asma[df0$r22==1]<-1 #asma 2010
+df0$asma[df0$m9p18A==1]<-1 #asma 2017
+
+table(df0$ENS,df0$asma)
+
+df0$mmcx3<-ifelse(df0$asma==1,1,0)
+
+table(df0$ENS,df0$mmcx3)
+
+```
+
+```{r , include=FALSE}
+# "Mild depression Moderate depression1", 
+
+# df0$aux7_MMC<-df0$Depresion_1_==1
+
+df0$mmcx4<-ifelse(df0$Depresion_1_==1,1,0)
+table(df0$ENS,df0$mmcx4)
+
+```
+
+```{r , include=FALSE}
+# "Diabetes mellitus2", 
+# df0$aux1_MMC<-df0$DIABETES_P1_==1
+df0$mmcx5<-ifelse(df0$DIABETES_P1_==1,2,0)
+table(df0$ENS,df0$mmcx5)
+
+```
+
+```{r , include=FALSE}
+# "Socioeconomic difficulties O.\npsychosocialos.1",
+df0$NEDU_low<-ifelse(df0$NEDU_==1,1,0)
+df0$mmcx6<-df0$NEDU_low
+
+table(df0$ENS,df0$mmcx6)
+
+```
+
+```{r , include=FALSE}
+# "Cerebrovascular disease / ACV / AVE2",
+df0$ACV[!is.na(df0$p130a1)|!is.na(df0$d6)|!is.na(df0$d1_F1)|!is.na(df0$d4)]<-0
+# c(`1` = "Colesterol alto o hipercolesterolemia", `2` = "Diabetes o azúcar en la sangre", `3` = "Ataque cardíaco o infarto al corazón", `4` = "Enfermedad coronaria o isquémica", `5` = "Arritmias", `6` = "Insuficiencia cardíaca", `7` = "Soplo", `8` = "Problemas en las válvulas", `9` = "Uso de marcapaso", `10` = "Presión alta o hipertensión arterial", `11` = "Derrame cerebral o accidente vascular encefálico", `12` = "Hemiplejía", `13` = "Afasia", `14` = "Enfermedad respiratoria crónica o bronquitis crónica",  `15` = "Asma", `16` = "Enfisema", `17` = "Neumoconiosis", `18` = "Tuberculosis del pulmón", `19` = "Tuberculosis del riñón", `20` = "Tuberculosis en otro órgano", `21` = "Rinitis alérgica", `22` = "Alergia nasal o fiebre de heno", `23` = "Sinusitis", `24` = "Alguna infección respiratoria en los dos últimos", `25` = "Cualquier otra enfermedad al pecho o pulmón", `26` = "Enfermedad o problema al oído", `27` = "Enfermedad o problema a la vista o visión", `28` = "Cataratas", `29` = "Glaucoma",  `30` = "Presbicia", `31` = "Astigmatismo", `32` = "Miopía", `33` = "Cirrosis hepática", `34` = "Daño crónico al hígado", `35` = "Cálculos o piedras a la vesícula", `36` = "Ulcera péptica ( úlcera gástrica, úlcera duodenal)", `37` = "Colon irritable", `38` = "Reflujo esofágico", `39` = "Sobrepeso", `40` = "Obesidad", `41` = "Hernia lumbar o hernia de la columna", `42` = "Artritis reumatoide (enfermedad deformante)", `43` = "Otro tipo de artritis o enfermedad del tejido", `44` = "Artrosis",  `45` = "Osteoporosis", `46` = "Insuficiencia renal, diálisis", `47` = "Transplante renal", `48` = "Hipotiroidismo", `49` = "Hipertiroidismo", `50` = "Epilepsia", `51` = "Depresión", `52` = "Esquizofrenia", `53` = "Demencia", `54` = "Alzheimer", `55` = "Cáncer", `56` = "Problemas ginecológicos", `57` = "Mioma uterino o tumor en el útero", `58` = "Prolapso uterino", `59` = "Problemas a las mamas", `60` = "Problemas en la próstata", `61` = "Tumor benigno de próstata", `62` = "SIDA", `63` = "Hanta",  `64` = "Desdentamiento", `65` = "Caries", `66` = "Enfermedad de las encías", `67` = "Otro problema crónico", `88` = "Otro problema no crónico", `98` = "Ninguna", `99` = "No responde")
+
+df0$ACV[df0$p130a1==11]<-1
+df0$ACV[df0$p130a2==11]<-1
+df0$ACV[df0$p130a3==11]<-1
+df0$ACV[df0$p130a4==11]<-1
+df0$ACV[df0$p130a5==11]<-1
+df0$ACV[df0$p130a6==11]<-1
+df0$ACV[df0$p130a7==11]<-1
+df0$ACV[df0$p130a8==11]<-1
+df0$ACV[df0$p130a9==11]<-1
+df0$ACV[df0$p130a10==11]<-1
+df0$ACV[df0$p130a11==11]<-1
+df0$ACV[df0$p130a12==11]<-1
+#2010-2017
+# d6 ¿Alguna vez un médico o doctor le ha dicho que tuvo o que sufrió un infarto al corazón?
+df0$ACV[df0$ENS==2 & df0$d6==1]<-1
+# d9 ¿Alguna vez un médico o doctor le ha dicho que tuvo o que sufrió un accidente vascular o trombosis cerebral?
+df0$ACV[df0$ENS==2 & df0$d9==1]<-1
+# d7. ¿Alguna vez un médico o doctor le ha dicho que tuvo o que sufrió una enfermedad vascular periférica o a las arterias de sus piernas?
+
+df0$ACV[df0$ENS==3 & df0$d7==1]<-1
+# d4. ¿Alguna vez un médico o doctor le ha dicho que tuvo o que sufrió un accidente vascular o trombosis cerebral (o derrame cerebral)?
+df0$ACV[df0$ENS==3 & df0$d4==1]<-1
+
+df0$mmcx7<-ifelse(df0$ACV==1,2,0)
+table(df0$ENS,df0$mmcx7)
+
+```
+
+```{r , include=FALSE}
+# ("Smoking1", "Osteoarthritis of knee, hip or other1", 
+# "Asthma1", "Mild depression Moderate depression1", "Diabetes mellitus2", 
+# "Socioeconomic difficulties O.\npsychosocialos.1", "Cerebrovascular disease / ACV / AVE2", 
+# "Liver disease1",
+
+df0$liver_disease<-NA
+df0$liver_disease[!is.na(df0$p130a1)|!is.na(df0$m10p7A)|!is.na(df0$m9p15A)]<-0
+df0$liver_disease[df0$p130a1 %in% c(33,34)]<-1
+
+# table(df0$liver_disease)
+df0$liver_disease[df0$p130a2 %in% c(33,34)]<-1
+df0$liver_disease[df0$p130a3 %in% c(33,34)]<-1
+df0$liver_disease[df0$p130a4 %in% c(33,34)]<-1
+df0$liver_disease[df0$p130a5 %in% c(33,34)]<-1
+df0$liver_disease[df0$p130a6 %in% c(33,34)]<-1
+df0$liver_disease[df0$p130a7 %in% c(33,34)]<-1
+df0$liver_disease[df0$p130a8 %in% c(33,34)]<-1
+df0$liver_disease[df0$p130a9 %in% c(33,34)]<-1
+df0$liver_disease[df0$p130a10 %in% c(33,34)]<-1
+df0$liver_disease[df0$p130a11 %in% c(33,34)]<-1
+df0$liver_disease[df0$p130a12 %in% c(33,34)]<-1
+
+df0$liver_disease[df0$m10p7A==1]<-1
+df0$liver_disease[df0$m9p15A==1]<-1
+table(df0$ENS,df0$m10p7A)
+table(df0$ENS,df0$m9p15A)
+
+df0$mmcx8<-ifelse(df0$liver_disease==1,1,0)
+table(df0$ENS,df0$mmcx8)
+
+
+```
+
+```{r , include=FALSE}
+# "Chronic obstructive pulmonary disease\n(COPC)1",
+df0$epoc<-NA
+df0$epoc[!is.na(df0$p130a1)|!is.na(df0$r18)|!is.na(df0$m9p17A)]<-0
+df0$epoc[df0$p130a1 %in% c(14,16)]<-1
+df0$epoc[df0$p130a2 %in% c(14,16)]<-1
+df0$epoc[df0$p130a3 %in% c(14,16)]<-1
+df0$epoc[df0$p130a4 %in% c(14,16)]<-1
+df0$epoc[df0$p130a5 %in% c(14,16)]<-1
+df0$epoc[df0$p130a6 %in% c(14,16)]<-1
+df0$epoc[df0$p130a7 %in% c(14,16)]<-1
+df0$epoc[df0$p130a8 %in% c(14,16)]<-1
+df0$epoc[df0$p130a9 %in% c(14,16)]<-1
+df0$epoc[df0$p130a10 %in% c(14,16)]<-1
+df0$epoc[df0$p130a11 %in% c(14,16)]<-1
+df0$epoc[df0$p130a12 %in% c(14,16)]<-1
+df0$epoc[df0$r18==1]<-1
+df0$epoc[df0$m9p17A==1]<-1
+
+df0$mmcx9<-ifelse(df0$epoc==1,1,0)
+table(df0$ENS,df0$mmcx9)
+
+
+```
+
+```{r , include=FALSE}
+# "Chronic kidney disease1",
+df0$Ckd<-ifelse(df0$FPG_MDRD>=30 & df0$FPG_MDRD<60,1,0)
+df0$mmcx10<-ifelse(df0$Ckd==1,1,0)
+table(df0$ENS,df0$Ckd)
+
+
+```
+
+```{r , include=FALSE}
+# df0$aux5_MMC<-df0$FPG_MDRD
+```
+
+```{r , include=FALSE}
+# "Advanced chronic kidney disease2", 
+df0$ackd<-ifelse(df0$FPG_MDRD<30,1,0)
+df0$mmcx11<-ifelse(df0$ackd==1,2,0)
+table(df0$ENS,df0$mmcx11)
+
+# "Cardiovascular disease / IAM /\nIschemic cardiopathy2", "Epilepsy1", 
+# "LIMITED FUNCTION / DISABILITY /\ndependence2", "Glaucoma1", 
+# "Arterial hypertension1", "Thyroid disorders1", "Malignancy / neoplasia / malignant tumor / cancer\nIs not P.1", 
+# "Neuropathic pain / fibromyalgia1", "Obesity1", "Coagulation disorders1"
+# ))
+# table(df0$ENS,df0$sobreviviente_cv)
+# EPOC'14' = "Enfermedad respiratoria crónica o bronquitis crónica",
+
+# table(df0$ENS,df0$r18)
+
+```
+
+```{r , include=FALSE}
+# "Liver disease1", "Chronic obstructive pulmonary disease\n(COPC)1", 
+# "Chronic kidney disease1", "Advanced chronic kidney disease2", 
+# "Cardiovascular disease / IAM /\nIschemic cardiopathy2",
+```
+
+```{r , include=FALSE}
+# "Cardiovascular disease / IAM /\nIschemic cardiopathy2",
+# 2003 
+# '3' = "Ataque cardíaco o infarto al corazón", '4' = "Enfermedad coronaria o isquémica",'11' = "Derrame cerebral o accidente vascular encefálico",
+df0$infarto<-NA
+df0$infarto[!is.na(df0$p130a1)|!is.na(df0$d6)|!is.na(df0$d1_F1)]<-0
+df0$infarto[df0$p130a1 %in% c(3,4)]<-1
+df0$infarto[df0$p130a2 %in% c(3,4)]<-1
+df0$infarto[df0$p130a3 %in% c(3,4)]<-1
+df0$infarto[df0$p130a4 %in% c(3,4)]<-1
+df0$infarto[df0$p130a5 %in% c(3,4)]<-1
+df0$infarto[df0$p130a6 %in% c(3,4)]<-1
+df0$infarto[df0$p130a7 %in% c(3,4)]<-1
+df0$infarto[df0$p130a8 %in% c(3,4)]<-1
+df0$infarto[df0$p130a9 %in% c(3,4)]<-1
+df0$infarto[df0$p130a10 %in% c(3,4)]<-1
+df0$infarto[df0$p130a11 %in% c(3,4)]<-1
+df0$infarto[df0$p130a12 %in% c(3,4)]<-1
+
+
+df0$infarto[df0$d6==1 & df0$ENS==2]<-1
+df0$infarto[df0$d1_F1==1 & df0$ENS==3]<-1
+
+df0$mmcx12<-ifelse(df0$infarto==1,2,0)
+table(df0$ENS,df0$d6)
+table(df0$ENS,df0$mmcx12)
+
+```
+
+```{r , include=FALSE}
+# "Epilepsy1",
+
+df0$epilepsia<-NA
+df0$epilepsia[!is.na(df0$p130a1)|!is.na(df0$m10p6A)]<-0
+df0$epilepsia[df0$p130a1 %in% c(50)]<-1
+df0$epilepsia[df0$p130a2 %in% c(50)]<-1
+df0$epilepsia[df0$p130a3 %in% c(50)]<-1
+df0$epilepsia[df0$p130a4 %in% c(50)]<-1
+df0$epilepsia[df0$p130a5 %in% c(50)]<-1
+df0$epilepsia[df0$p130a6 %in% c(50)]<-1
+df0$epilepsia[df0$p130a7 %in% c(50)]<-1
+df0$epilepsia[df0$p130a8 %in% c(50)]<-1
+df0$epilepsia[df0$p130a9 %in% c(50)]<-1
+df0$epilepsia[df0$p130a10 %in% c(50)]<-1
+df0$epilepsia[df0$p130a11 %in% c(50)]<-1
+df0$epilepsia[df0$p130a12 %in% c(50)]<-1
+
+
+df0$epilepsia[df0$m10p6A==1 & df0$ENS==2]<-1
+# df0$epilepsia[df0$d1_F1==1 & df0$ENS==3]<-1
+
+df0$mmcx13<-ifelse(df0$epilepsia==1,1,0)
+table(df0$ENS,df0$mmcx13)
+
+#no evaluado en ENS2017
+
+```
+
+```{r , include=FALSE}
+# "LIMITED FUNCTION / DISABILITY /\ndependence2",
+
+df0$pfeffer_score[df0$ENS==1]<-df0$p17_p[df0$ENS==1]
+df0$pfeffer_score[df0$ENS==2]<-df0$pfeffer[df0$ENS==2]
+# df0$pfeffer_score[df0$ENS==3]<-df0$ptjePfeffer_MINSAL
+df0$pfeffer_score[df0$ENS==3]<-df0$ptjePfeffer_MINSAL[df0$ENS==3]
+table(df0$ENS,df0$pfeffer_score)
+
+df0$t10a_[df0$ENS==1]<-df0$p17_a[df0$ENS==1]
+df0$t10a_[df0$ENS==2]<-df0$punto_t10a[df0$ENS==2]
+df0$t10a_[df0$ENS==3]<-df0$t10a[df0$ENS==3]
+table(df0$ENS,df0$t10a_)
+df0$t10b_[df0$ENS==1]<-df0$p17_b[df0$ENS==1]
+df0$t10b_[df0$ENS==2]<-df0$punto_t10b[df0$ENS==2]
+df0$t10b_[df0$ENS==3]<-df0$t10b[df0$ENS==3]
+table(df0$ENS,df0$t10b_)
+df0$t10c_[df0$ENS==1]<-df0$p17_c[df0$ENS==1]
+df0$t10c_[df0$ENS==2]<-df0$punto_t10c[df0$ENS==2]
+df0$t10c_[df0$ENS==3]<-df0$t10c[df0$ENS==3]
+table(df0$ENS,df0$t10c_)
+df0$t10d_[df0$ENS==1]<-df0$p17_d[df0$ENS==1]
+df0$t10d_[df0$ENS==2]<-df0$punto_t10d[df0$ENS==2]
+df0$t10d_[df0$ENS==3]<-df0$t10d[df0$ENS==3]
+table(df0$ENS,df0$t10d_)
+df0$t10e_[df0$ENS==1]<-df0$p17_e[df0$ENS==1]
+df0$t10e_[df0$ENS==2]<-df0$punto_t10e[df0$ENS==2]
+df0$t10e_[df0$ENS==3]<-df0$t10e[df0$ENS==3]
+table(df0$ENS,df0$t10e_)
+df0$t10f_[df0$ENS==1]<-df0$p17_f[df0$ENS==1]
+df0$t10f_[df0$ENS==2]<-df0$punto_t10f[df0$ENS==2]
+df0$t10f_[df0$ENS==3]<-df0$t10f[df0$ENS==3]
+table(df0$ENS,df0$t10f_)
+df0$t10g_[df0$ENS==1]<-df0$p17_g[df0$ENS==1]
+df0$t10g_[df0$ENS==2]<-df0$punto_t10g[df0$ENS==2]
+df0$t10g_[df0$ENS==3]<-df0$t10g[df0$ENS==3]
+table(df0$ENS,df0$t10g_)
+df0$t10h_[df0$ENS==1]<-df0$p17_h[df0$ENS==1]
+df0$t10h_[df0$ENS==2]<-df0$punto_t10h[df0$ENS==2]
+df0$t10h_[df0$ENS==3]<-df0$t10h[df0$ENS==3]
+table(df0$ENS,df0$t10h_)
+df0$t10i_[df0$ENS==1]<-df0$p17_i[df0$ENS==1]
+df0$t10i_[df0$ENS==2]<-df0$punto_t10i[df0$ENS==2]
+df0$t10i_[df0$ENS==3]<-df0$t10i[df0$ENS==3]
+table(df0$ENS,df0$t10i_)
+df0$t10j_[df0$ENS==1]<-df0$p17_j[df0$ENS==1]
+df0$t10j_[df0$ENS==2]<-df0$punto_t10j[df0$ENS==2]
+df0$t10j_[df0$ENS==3]<-df0$t10j[df0$ENS==3]
+table(df0$ENS,df0$t10j_)
+df0$t10k_[df0$ENS==1]<-df0$p17_k[df0$ENS==1]
+df0$t10k_[df0$ENS==2]<-df0$punto_t10k[df0$ENS==2]
+df0$t10k_[df0$ENS==3]<-df0$t10k[df0$ENS==3]
+table(df0$ENS,df0$t10k_)
+
+names_pfeffer<-c("t10a_", "t10b_", "t10c_", 
+                 "t10d_", "t10e_", "t10f_", "t10g_", "t10h_", "t10i_", "t10j_", 
+                 "t10k_")
+
+df0$pfeffer_AP<-rowSums(df0[,names_pfeffer], na.rm = TRUE)
+# df0$pfeffer_AP2<-rowSums(df0[,names_pfeffer], na.rm = FALSE)
+table(df0$ENS,df0$pfeffer_AP)
+# table(df0$ENS,df0$pfeffer_AP2)
+df0$pfeffer_6<-as.numeric(df0$pfeffer_AP>=6)
+table(df0$ENS,df0$pfeffer_6)
+# dput(names(df0)[grepl("t10",names(df0))])
+# punto_pe11 #encuestador
+# 2017
+
+
+df0$mmcx14<-ifelse(df0$pfeffer_6==1,2,0)
+table(df0$ENS,df0$mmcx14)
+
+```
+
+```{r , include=FALSE}
+# "Glaucoma1",
+df0$glaucoma<-NA
+df0$glaucoma[!is.na(df0$p130a1)|!is.na(df0$v9)|!is.na(df0$v6)]<-0
+df0$glaucoma[df0$p130a1 %in% c(29)]<-1
+df0$glaucoma[df0$p130a2 %in% c(29)]<-1
+df0$glaucoma[df0$p130a3 %in% c(29)]<-1
+df0$glaucoma[df0$p130a4 %in% c(29)]<-1
+df0$glaucoma[df0$p130a5 %in% c(29)]<-1
+df0$glaucoma[df0$p130a6 %in% c(29)]<-1
+df0$glaucoma[df0$p130a7 %in% c(29)]<-1
+df0$glaucoma[df0$p130a8 %in% c(29)]<-1
+df0$glaucoma[df0$p130a9 %in% c(29)]<-1
+df0$glaucoma[df0$p130a10 %in% c(29)]<-1
+df0$glaucoma[df0$p130a11 %in% c(29)]<-1
+df0$glaucoma[df0$p130a12 %in% c(29)]<-1
+
+
+df0$glaucoma[df0$v9==1 & df0$ENS==2]<-1
+df0$glaucoma[df0$v6==1 & df0$ENS==3]<-1
+
+df0$mmcx15<-ifelse(df0$glaucoma==1,1,0)
+table(df0$ENS,df0$mmcx15)
+
+
+```
+
+```{r , include=FALSE}
+# ./Dropbox/MEGA/Base fusionada ENS/Paper multimorbilidad/Multimorbilidad 2010-2017 ENS 01AUG2018.sps:767: * RECODE ta4_2010 TABACO_DEP_2010(SYSMIS=-99).
+# 
+# ("Smoking1", "Osteoarthritis of knee, hip or other1", 
+# "Asthma1", "Mild depression Moderate depression1", "Diabetes mellitus2", 
+# "Socioeconomic difficulties O.\npsychosocialos.1", "Cerebrovascular disease / ACV / AVE2", 
+# "Liver disease1", "Chronic obstructive pulmonary disease\n(COPC)1", 
+# "Chronic kidney disease1", "Advanced chronic kidney disease2", 
+# "Cardiovascular disease / IAM /\nIschemic cardiopathy2", "Epilepsy1", 
+# "LIMITED FUNCTION / DISABILITY /\ndependence2", "Glaucoma1", 
+# "Arterial hypertension1", "Thyroid disorders1", "Malignancy / neoplasia / malignant tumor / cancer\nIs not P.1", 
+# "Neuropathic pain / fibromyalgia1", "Obesity1", "Coagulation disorders1"
+# ))
+
+```
+
+```{r , include=FALSE}
+# "Arterial hypertension1",
+# df0$aux2_MMC<-df0$HTA2003_10_17_ATC
+df0$mmcx16<-ifelse(df0$HTA2003_10_17_ATC==1,1,0)
+table(df0$ENS,df0$mmcx16)
+
+```
+
+```{r , include=FALSE}
+# "Thyroid disorders1",
+
+df0$thyroid_disorders<-NA
+df0$thyroid_disorders[!is.na(df0$p130a1)|!is.na(df0$m10p1A)|!is.na(df0$m9p1A)]<-0
+df0$thyroid_disorders[df0$p130a1 %in% c(48,49)]<-1
+df0$thyroid_disorders[df0$p130a2 %in% c(48,49)]<-1
+df0$thyroid_disorders[df0$p130a3 %in% c(48,49)]<-1
+df0$thyroid_disorders[df0$p130a4 %in% c(48,49)]<-1
+df0$thyroid_disorders[df0$p130a5 %in% c(48,49)]<-1
+df0$thyroid_disorders[df0$p130a6 %in% c(48,49)]<-1
+df0$thyroid_disorders[df0$p130a7 %in% c(48,49)]<-1
+df0$thyroid_disorders[df0$p130a8 %in% c(48,49)]<-1
+df0$thyroid_disorders[df0$p130a9 %in% c(48,49)]<-1
+df0$thyroid_disorders[df0$p130a10 %in% c(48,49)]<-1
+df0$thyroid_disorders[df0$p130a11 %in% c(48,49)]<-1
+df0$thyroid_disorders[df0$p130a12 %in% c(48,49)]<-1
+
+
+df0$thyroid_disorders[df0$m10p1A==1 & df0$ENS==2]<-1
+df0$thyroid_disorders[df0$m9p1A==1 & df0$ENS==3]<-1
+
+df0$mmcx17<-ifelse(df0$thyroid_disorders==1,1,0)
+table(df0$ENS,df0$mmcx17)
+
+
+```
+
+```{r , include=FALSE}
+# "Malignancy / neoplasia / malignant tumor / cancer\nIs not P.1",
+ENS2003_2010_2017_book %>%
+  subset(grepl("Cáncer",label)|grepl("Cáncer",labels))%>%
+  select(ID,label,ENS)%>%
+  subset(ENS=="2010")
+
+df0$cancer<-NA
+df0$cancer[!is.na(df0$p130a1)|!is.na(df0$m6p14)|!is.na(df0$m10p2A)]<-0
+df0$cancer[df0$p130a1==55]<-1
+df0$cancer[df0$p130a2==55]<-1
+df0$cancer[df0$p130a3==55]<-1
+df0$cancer[df0$p130a4==55]<-1
+df0$cancer[df0$p130a5==55]<-1
+df0$cancer[df0$p130a6==55]<-1
+df0$cancer[df0$p130a7==55]<-1
+df0$cancer[df0$p130a8==55]<-1
+df0$cancer[df0$p130a9==55]<-1
+df0$cancer[df0$p130a10==55]<-1
+df0$cancer[df0$p130a11==55]<-1
+df0$cancer[df0$p130a12==55]<-1
+df0$cancer[df0$m6p14==1 & df0$ENS==2]<-1
+df0$cancer[df0$m10p2A==1 & df0$ENS==2]<-1
+# table(df0$cancer,df0$ENS)
+df0$mmcx18<-ifelse(df0$cancer==1,1,0)
+table(df0$ENS,df0$mmcx18)
+
+
+
+# 
+# m6p14. ¿Alguna vez un doctor o médico le ha dicho que tiene o que padece de Cáncer de mama?	
+# m10p2A. ¿Alguna vez un doctor o médico le ha dicho que tiene o que padece de Cáncer de tiroides?
+
+
+```
+
+```{r , include=FALSE}
+# "Neuropathic pain / fibromyalgia1",
+# table(df0$p39)
+df0$neuro_pain<-NA
+df0$neuro_pain[!is.na(df0$p39)|!is.na(df0$p46)|!is.na(df0$sm6)|!is.na(df0$sm1)]<-0
+df0$neuro_pain[df0$p39==10]<-1
+df0$neuro_pain[df0$p46==10]<-1
+df0$neuro_pain[df0$sm6==10 & df0$ENS==2]<-1
+df0$neuro_pain[df0$sm9==10 & df0$ENS==3]<-1
+
+df0$mmcx19<-ifelse(df0$neuro_pain==1,1,0)
+table(df0$ENS,df0$mmcx19)
+
+
+```
+
+```{r , include=FALSE}
+# "Obesity1",
+
+
+df0$mmcx20<-ifelse(df0$Obeso_==1,1,0)
+table(df0$ENS,df0$mmcx20)
+
+```
+
+```{r , include=FALSE}
+# "Coagulation disorders1"
+
+df0$coag<-NA
+df0$coag[!is.na(df0$san_2)|!is.na(df0$m2p4)]<-0
+df0$coag[df0$san_2 %in% c(1,2) & df0$ENS==1]<-1
+df0$coag[df0$m2p4 %in% c(1,2) & df0$ENS!=1]<-1
+df0$mmcx21<-ifelse(df0$coag==1,1,0)
+table(df0$ENS,df0$mmcx21)
+
+```
+
+```{r , include=FALSE}
+
+
+df0$fexp<-df0$Fexp_EX1p_Corr_
+df0_<-subset(df0,!is.na(fexp))
+df0_<-subset(df0_,fexp!=0)
+
+
+```
+
+```{r, include=FALSE}
+# names_originales_01<-c("fum_actual_", "SME2_", "asma", "Depresion_1_", "DIABETES_P1_", 
+#                        "NEDU_low", "ACV", "liver_disease", "epoc", "Ckd", "ackd", "infarto", 
+#                        "epilepsia", "pfeffer_6", "glaucoma", "HTA2003_10_17_ATC",
+#                        "thyroid_disorders", 
+#                        "cancer", "neuro_pain", "Obeso_", "coag")
+# 
+# names_scores<-c("mmcx1", "mmcx2", "mmcx3", "mmcx4", "mmcx5", "mmcx6", "mmcx7", 
+#                 "mmcx8", "mmcx9", "mmcx10", "mmcx11", "mmcx12", "mmcx13", "mmcx14", 
+#                 "mmcx15", "mmcx16", "mmcx17", "mmcx18", "mmcx19", "mmcx20", "mmcx21")
+
+#cancer and epilepsia are not in ENS2017
+names_originales_01<-c("fum_actual_", "SME2_", "asma", "Depresion_1_", "DIABETES_P1_", 
+                       "NEDU_low", "ACV", "liver_disease", "epoc", "Ckd", "ackd", "infarto", 
+                       "pfeffer_6", "glaucoma", "HTA2003_10_17_ATC",
+                       "thyroid_disorders", 
+                        "neuro_pain", "Obeso_", "coag")
+
+names_scores<-c("mmcx1", "mmcx2", "mmcx3", "mmcx4", "mmcx5", "mmcx6", "mmcx7", 
+                "mmcx8", "mmcx9", "mmcx10", "mmcx11", "mmcx12", 
+                 "mmcx14", 
+                "mmcx15", "mmcx16", "mmcx17", 
+                "mmcx19", "mmcx20", "mmcx21")
+
+# df0$mmcx18<-ifelse(df0$cancer==1,1,0)
+# table(df0$ENS,df0$mmcx18)
+# df0$mmcx13<-ifelse(df0$epilepsia==1,1,0)
+# table(df0$ENS,df0$mmcx13)
+```
+
+```{r, include=FALSE}
+df0$MMC_n<-rowSums(df0[,names_originales_01], na.rm = TRUE)
+df0$MMC_n_MISSING<-rowSums(is.na(df0[,names_originales_01]))
+df0$MMC_n_0M<-df0$MMC_n
+df0$MMC_n_0M[df0$MMC_n_MISSING!=0]<-NA
+
+
+
+df0$MMC_Score<-rowSums(df0[,names_scores], na.rm = TRUE)
+table(df0$ENS,df0$MMC_Score)
+df0$MMC_Score_MISSING<-rowSums(is.na(df0[,names_scores]))
+
+df0$MMC_Score_0M<-df0$MMC_Score
+df0$MMC_Score_0M[df0$MMC_Score_MISSING!=0]<-NA
+
+
+
+
+table(df0$ENS,df0$MMC_Score_0M)
+table(df0$ENS,!is.na(df0$MMC_Score_0M))
+
+
+
+t_f<-function(expx) {
+  df0 %>% 
+    mutate(exp:=.data[[expx]]) %>%
+    group_by(ENS,exp)%>%
+    summarise(n())%>% 
+    mutate(exp_=!!expx)
+}
+
+# t_f("mmcx1")
+
+t_f1 <- lapply(names_originales_01,
+               t_f)
+table(df0$ENS)
+```
+
+```{r, include=FALSE}
+df0$MMC_cat_gob<-cut(df0$MMC_Score_0M,c(-Inf,0,1,4,Inf))
+
+df0$MMC_cat_gob<-factor(df0$MMC_cat_gob,
+                        levels=c("(-Inf,0]","(0,1]",
+                                 "(1,4]","(4, Inf]" ),
+                        labels=c("0","1",
+                                 "2-4","5+"))
+
+df0$MMC_cat_gob_M<-cut(df0$MMC_Score,c(-Inf,0,1,4,Inf))
+df0$MMC_cat_gob_M<-factor(df0$MMC_cat_gob_M,
+                        levels=c("(-Inf,0]","(0,1]",
+                                 "(1,4]","(4, Inf]" ),
+                        labels=c("0","1",
+                                 "2-4","5+"))
+
+
+table(df0$MMC_cat_gob,df0$ENS)
+```
+
+```{r , echo=FALSE,  include=FALSE}
+df0$folio_
+df0 %>%
+  select(contains("foli"))%>%
+  View()
+
+ENS2003_2010_2017_MMC<-df0 %>%
+  select(ENS,FOLIO,MMC_Score_0M, MMC_cat_gob, MMC_Score, MMC_cat_gob_M,names_originales_01,names_scores)
+write.csv(ENS2003_2010_2017_MMC,"ENS2003_2010_2017_MMC.csv")
+
+save.image(file="MMC_2017.RData")
+# load("MMC.RData")
+
+```
+
+\newpage
+
+# REFERENCES
